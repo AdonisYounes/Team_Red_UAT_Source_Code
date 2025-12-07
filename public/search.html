@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Search Rooms</title>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+    body {
+      background: radial-gradient(circle at top left, #4f46e5, #111827);
+      min-height: 100vh;
+      padding: 30px;
+      color: #fff;
+    }
+    .topbar { display: flex; justify-content: space-between; margin-bottom: 20px; }
+    .topbar a { color: #dbeafe; text-decoration: none; font-weight: 600; }
+    .page { max-width: 1100px; margin: auto; display: flex; gap: 24px; }
+    .search-box, .results-box {
+      background: #f3f4f6; color: #111;
+      padding: 24px;
+      border-radius: 16px;
+      width: 100%;
+      box-shadow: 0 8px 20px rgba(0,0,0,.25);
+    }
+    .room-card {
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #ddd;
+      transition: .2s;
+    }
+    .room-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 22px rgba(0,0,0,.2);
+    }
+    button {
+      background: linear-gradient(to right, #4f46e5, #6366f1);
+      border: none;
+      padding: 10px 16px;
+      border-radius: 999px;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .15s;
+    }
+    button:hover { opacity: .9; transform: translateY(-2px); }
+    label { font-weight: 600; margin-top: 10px; display: block; }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <a href="my_reservations.html">My Reservations</a>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="page">
+
+    <!-- LEFT -->
+    <div class="search-box">
+      <h2>Search Rooms</h2>
+
+      <form id="searchForm">
+        <label>Date</label>
+        <input type="date" name="date" required>
+
+        <label>Start Time</label>
+        <input type="time" name="startTime" required>
+
+        <label>Duration</label>
+        <select name="duration">
+          <option value="30">30 Minutes</option>
+          <option value="60">60 Minutes</option>
+        </select>
+
+        <label>Minimum Capacity</label>
+        <input type="number" name="capacity">
+
+        <label>Equipment (comma separated)</label>
+        <input type="text" name="equipment">
+
+        <button type="submit">Search</button>
+      </form>
+
+      <p id="message" style="margin-top: 12px; color: red;"></p>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="results-box">
+      <h2>Available Rooms</h2>
+      <div id="results"></div>
+    </div>
+
+  </div>
+
+<script>
+document.getElementById("logoutBtn").onclick = async () => {
+  await fetch("/api/logout", { method: "POST" });
+  window.location.href = "/login.html";
+};
+
+document.getElementById("searchForm").onsubmit = async (e) => {
+  e.preventDefault();
+
+  const params = new URLSearchParams(new FormData(e.target));
+  const res = await fetch("/api/rooms?" + params.toString());
+  const data = await res.json();
+  const results = document.getElementById("results");
+
+  results.innerHTML = "";
+
+  if (!res.ok) {
+    document.getElementById("message").textContent = data.message;
+    return;
+  }
+
+  data.rooms.forEach(room => {
+    const card = document.createElement("div");
+    card.className = "room-card";
+    card.innerHTML = `
+      <div class="room-name">Room ${room.id}</div>
+      <p><strong>Capacity:</strong> ${room.capacity}</p>
+      <p><strong>Equipment:</strong> ${room.equipment.join(", ")}</p>
+      <button class="reserve-btn" data-room-id="${room.id}">Reserve</button>
+    `;
+    results.appendChild(card);
+  });
+
+  document.querySelectorAll(".reserve-btn").forEach(btn => {
+    btn.onclick = async () => {
+      const payload = Object.fromEntries(new FormData(document.getElementById("searchForm")).entries());
+      payload.roomId = btn.dataset.roomId;
+
+      const res2 = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data2 = await res2.json();
+      const msg = document.getElementById("message");
+
+      msg.style.color = res2.ok ? "#10b981" : "red";
+      msg.textContent = data2.message;
+    };
+  });
+};
+</script>
+
+</body>
+</html>

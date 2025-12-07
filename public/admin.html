@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top left, #4f46e5, #111827);
+      min-height: 100vh;
+      padding: 30px;
+      color: #f9fafb;
+    }
+
+    /* Top Navigation */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .topbar a {
+      color: #dbeafe;
+      font-weight: 600;
+      text-decoration: none;
+      margin-right: 14px;
+      transition: opacity .15s ease;
+    }
+
+    .topbar a:hover {
+      opacity: .7;
+    }
+
+    button {
+      padding: 9px 18px;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(to right, #4f46e5, #6366f1);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      opacity: .9;
+    }
+
+    /* Page layout */
+    .page {
+      max-width: 1200px;
+      margin: auto;
+      display: flex;
+      gap: 24px;
+    }
+
+    /* Left Panel: Maintenance Form */
+    .form-box {
+      width: 40%;
+      background: #f3f4f6;
+      color: #111827;
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    .form-box h2 {
+      font-size: 22px;
+      margin-bottom: 16px;
+      color: #111827;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px;
+      color: #374151;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 14px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      font-size: 14px;
+      transition: border .15s, box-shadow .15s;
+    }
+
+    input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99,102,241,.3);
+      outline: none;
+    }
+
+    /* Right Panel: Reservation + Block Lists */
+    .reservations-box {
+      flex: 1;
+      background: #f3f4f6;
+      color: #111827;
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    .reservations-box h2 {
+      margin-bottom: 20px;
+      font-size: 22px;
+    }
+
+    .reservations-box h3 {
+      margin-top: 22px;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .reservation-card {
+      background: white;
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      border: 1px solid #e5e7eb;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .reservation-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 35px rgba(0,0,0,0.2);
+    }
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .res-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .badge {
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge.active   { background: #10b981; color: white; }
+    .badge.canceled { background: #ef4444; color: white; }
+    .badge.noshow   { background: #f59e0b; color: white; }
+
+    .badge.block {
+      background: #6b7280;
+      color: #f9fafb;
+    }
+
+    .info {
+      margin: 4px 0;
+      font-size: 15px;
+    }
+
+    #message {
+      margin-top: 12px;
+      font-size: 14px;
+      min-height: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <a href="search.html">Back to Search</a>
+    </div>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="page">
+
+    <!-- LEFT PANEL: Maintenance Form -->
+    <div class="form-box">
+      <h2>Create Maintenance Block</h2>
+
+      <form id="maintenanceForm">
+        <label>Room ID</label>
+        <input type="number" name="roomId" required>
+
+        <label>Date</label>
+        <input type="date" name="date" required>
+
+        <label>Start Time</label>
+        <input type="time" name="startTime" required>
+
+        <label>Duration (minutes)</label>
+        <input type="number" name="duration" value="60" required>
+
+        <button type="submit">Add Block</button>
+      </form>
+
+      <p id="message"></p>
+    </div>
+
+    <!-- RIGHT PANEL: Reservations + Blocks -->
+    <div class="reservations-box">
+      <h2>All Reservations</h2>
+      <div id="reservations"></div>
+
+      <h3>Current Maintenance Blocks</h3>
+      <div id="blocks"></div>
+    </div>
+
+  </div>
+
+  <script>
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await fetch("/api/logout", { method: "POST" });
+      window.location.href = "/login.html";
+    });
+
+    // Create block
+    document.getElementById("maintenanceForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const payload = Object.fromEntries(new FormData(e.target).entries());
+
+      const res = await fetch("/api/admin/blocks", {   // <-- correct URL
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      const msg = document.getElementById("message");
+      msg.style.color = res.ok ? "#10b981" : "#ef4444";
+      msg.textContent = res.ok ? "Block added." : (data.message || "Could not add block.");
+
+      if (res.ok) {
+        e.target.reset();
+      }
+
+      loadReservations();
+    });
+
+    async function loadReservations() {
+      const res = await fetch("/api/admin/reservations");
+      const data = await res.json();
+
+      const reservationsContainer = document.getElementById("reservations");
+      const blocksContainer       = document.getElementById("blocks");
+
+      reservationsContainer.innerHTML = "";
+      blocksContainer.innerHTML       = "";
+
+      (data.reservations || []).forEach(r => {
+        // Admin maintenance blocks (userId === "ADMIN_BLOCK")
+        if (r.userId === "ADMIN_BLOCK") {
+          const div = document.createElement("div");
+          div.className = "reservation-card";
+          div.innerHTML = `
+            <div class="title-row">
+              <div class="res-title">Block ${r.id}</div>
+              <div class="badge block">Maintenance</div>
+            </div>
+            <div class="info"><strong>Room:</strong> ${r.roomId}</div>
+            <div class="info"><strong>Date:</strong> ${r.date}</div>
+            <div class="info"><strong>Time:</strong> ${r.startTime}</div>
+            <div class="info"><strong>Duration:</strong> ${r.duration} minutes</div>
+          `;
+          blocksContainer.appendChild(div);
+        } else {
+          // Normal reservations
+          let badgeClass = "";
+          let badgeText  = "";
+
+          if (r.status === "ACTIVE") {
+            badgeClass = "active";   badgeText = "Active";
+          } else if (r.status === "CANCELED") {
+            badgeClass = "canceled"; badgeText = "Canceled";
+          } else if (r.status === "NO_SHOW_CANCELED") {
+            badgeClass = "noshow";   badgeText = "No-Show Canceled";
+          }
+
+          const div = document.createElement("div");
+          div.className = "reservation-card";
+          div.innerHTML = `
+            <div class="title-row">
+              <div class="res-title">Reservation ${r.id}</div>
+              <div class="badge ${badgeClass}">${badgeText}</div>
+            </div>
+            <div class="info"><strong>User:</strong> ${r.userId}</div>
+            <div class="info"><strong>Room:</strong> ${r.roomId}</div>
+            <div class="info"><strong>Date:</strong> ${r.date}</div>
+            <div class="info"><strong>Time:</strong> ${r.startTime}</div>
+            <div class="info"><strong>Duration:</strong> ${r.duration} minutes</div>
+          `;
+          reservationsContainer.appendChild(div);
+        }
+      });
+    }
+
+    loadReservations();
+  </script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>My Reservations</title>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+    body {
+      background: radial-gradient(circle at top left, #4f46e5, #111827);
+      min-height: 100vh;
+      padding: 30px;
+      color: #fff;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .topbar a { color: #dbeafe; text-decoration: none; font-weight: 600; }
+    .container { max-width: 1100px; margin: auto; }
+    .reservation-card {
+      background: #f3f4f6;
+      color: #111;
+      padding: 20px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      border: 1px solid #ddd;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      transition: .2s;
+    }
+    .reservation-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    }
+    .actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      background: linear-gradient(to right, #4f46e5, #6366f1);
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      color: white;
+      cursor: pointer;
+      transition: .15s;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    button:hover { transform: translateY(-2px); opacity: .9; }
+    #message {
+      margin-top: 12px;
+      min-height: 18px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <a href="search.html">Back to Search</a>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="container">
+    <h1>My Reservations</h1>
+    <div id="list"></div>
+    <p id="message"></p>
+  </div>
+
+  <script>
+    document.getElementById("logoutBtn").onclick = async () => {
+      await fetch("/api/logout", { method: "POST" });
+      window.location.href = "/login.html";
+    };
+
+    async function loadReservations() {
+      const list = document.getElementById("list");
+      const message = document.getElementById("message");
+
+      list.innerHTML = "";
+      message.textContent = "";
+      message.style.color = "#ffffff";
+
+      try {
+        const res = await fetch("/api/reservations");
+        const raw = await res.json();
+
+        console.log("GET /api/reservations raw response:", raw);
+
+        // Handle all possible shapes: array, {reservations:[...]}, {reservation:{...}}
+        let reservations;
+        if (Array.isArray(raw)) {
+          reservations = raw;
+        } else if (Array.isArray(raw.reservations)) {
+          reservations = raw.reservations;
+        } else if (raw.reservation) {
+          reservations = [raw.reservation];
+        } else {
+          reservations = [];
+        }
+
+        if (!reservations.length) {
+          list.innerHTML = "<p>No reservations found.</p>";
+          return;
+        }
+
+        reservations.forEach(r => {
+          const card = document.createElement("div");
+          card.className = "reservation-card";
+
+          card.innerHTML = `
+            <h3>Reservation ${r.id}</h3>
+            <p><strong>Room:</strong> Room ${r.roomId}</p>
+            <p><strong>Date:</strong> ${r.date}</p>
+            <p><strong>Time:</strong> ${r.startTime}</p>
+            <p><strong>Duration:</strong> ${r.duration} minutes</p>
+            <p><strong>Status:</strong> ${r.status}</p>
+            <p><strong>Checked in:</strong> ${r.checkedIn ? "Yes" : "No"}</p>
+          `;
+
+          // Buttons only for active reservations
+          if (r.status === "ACTIVE") {
+            const actions = document.createElement("div");
+            actions.className = "actions";
+
+            const checkBtn = document.createElement("button");
+            checkBtn.textContent = "Check In";
+            checkBtn.onclick = async () => {
+              const resCheck = await fetch(`/api/reservations/${r.id}/checkin`, {
+                method: "POST"
+              });
+              const dataCheck = await resCheck.json();
+              message.style.color = resCheck.ok ? "#10b981" : "#ef4444";
+              message.textContent = dataCheck.message || (resCheck.ok ? "Checked in." : "Check in failed.");
+              if (resCheck.ok) {
+                await loadReservations();
+              }
+            };
+
+            const cancelBtn = document.createElement("button");
+            cancelBtn.textContent = "Cancel";
+            cancelBtn.onclick = async () => {
+              const resCancel = await fetch(`/api/reservations/${r.id}/cancel`, {
+                method: "POST"
+              });
+              const dataCancel = await resCancel.json();
+              message.style.color = resCancel.ok ? "#10b981" : "#ef4444";
+              message.textContent = dataCancel.message || (resCancel.ok ? "Reservation canceled." : "Cancel failed.");
+              if (resCancel.ok) {
+                await loadReservations();
+              }
+            };
+
+            actions.appendChild(checkBtn);
+            actions.appendChild(cancelBtn);
+            card.appendChild(actions);
+          }
+
+          list.appendChild(card);
+        });
+
+      } catch (err) {
+        console.error("Error loading reservations:", err);
+        message.textContent = "Could not load reservations. Check console for details.";
+        message.style.color = "#ef4444";
+      }
+    }
+
+    loadReservations();
+  </script>
+
+</body>
+</html>
