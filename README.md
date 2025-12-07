@@ -4,7 +4,7 @@ Team Red implementation for the CSC 430 final project. This application allows s
 
 ---
 
-## 👥 Team Members (Group 7 – Team Red)
+## 👥 Team Members (Group 7 - Team Red)
 
 - Kareen  
 - Jason  
@@ -28,13 +28,13 @@ This repository contains the **baseline executable code** for UAT (User Acceptan
 - **Backend:** Node.js, Express.js  
 - **Frontend:** HTML, CSS, JavaScript (served from the `public` folder)  
 - **Data:** In-memory data structures (from `data.js`) for rooms, users, and reservations  
-- **Runtime:** Node.js
+- **Runtime:** Node.js  
 
 ---
 
 ## ✅ Implemented Features  
 
-Student-facing:
+**Student-facing:**
 
 - Login with student credentials  
 - Room listing and search  
@@ -45,32 +45,33 @@ Student-facing:
 - Check-in functionality  
 - Auto-cancel of no-shows after 15 minutes  
 
-Admin-facing:
+**Admin-facing:**
 
 - Admin login  
 - Ability to add and manage maintenance blocks  
 - Reservation reporting / overview for administrators  
 
 ---
+
 ## Test Accounts
 
 ### Student Account
-- Email: student1@example.com  
-- Password: password  
+- Email: `student1@example.com`  
+- Password: `password`  
 
 ### Admin Account
-- Email: admin@example.com  
-- Password: adminpass  
+- Email: `admin@example.com`  
+- Password: `adminpass`  
 
+---
 
 ## 🚀 How to Run the Project Locally  
 
 1. **Install Node.js** (if not already installed).  
-2. **Clone this repository:**
+
+2. **Clone the repository, install dependencies, and start the server:**
    ```bash
    git clone https://github.com/AdonisYounes/Team_Red_UAT_Source_Code
-
-3.cd Team_Red_UAT_Source_Code
-4.npm install
-5.npm start
-6.Open the application in a browser: http://localhost:3000/login.html
+   cd Team_Red_UAT_Source_Code
+   npm install
+   npm start
