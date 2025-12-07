@@ -52,6 +52,16 @@ Admin-facing:
 - Reservation reporting / overview for administrators  
 
 ---
+## Test Accounts
+
+### Student Account
+- Email: student1@example.com  
+- Password: password  
+
+### Admin Account
+- Email: admin@example.com  
+- Password: adminpass  
+
 
 ## 🚀 How to Run the Project Locally  
 
@@ -59,3 +69,8 @@ Admin-facing:
 2. **Clone this repository:**
    ```bash
    git clone https://github.com/AdonisYounes/Team_Red_UAT_Source_Code
+
+3.cd Team_Red_UAT_Source_Code
+4.npm install
+5.npm start
+6.Open the application in a browser: http://localhost:3000/login.html
